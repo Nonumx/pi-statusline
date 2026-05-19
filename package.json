@@ -1,0 +1,23 @@
+{
+  "name": "pi-extension-template",
+  "version": "0.1.0",
+  "private": "true",
+  "type": "module",
+  "keywords": [
+    "pi-package"
+  ],
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "^0.75.3",
+    "@types/node": "^25.9.0",
+    "typebox": "^1.1.38",
+    "typescript": "^6.0.3"
+  }
+}
