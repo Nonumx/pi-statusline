@@ -1,5 +1,5 @@
 {
-  "name": "pi-extension-template",
+  "name": "pi-statusline",
   "version": "0.1.0",
   "private": "true",
   "type": "module",
