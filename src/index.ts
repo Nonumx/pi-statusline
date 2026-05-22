@@ -4,6 +4,7 @@ import type {
   ReadonlyFooterDataProvider,
   Theme,
 } from "@earendil-works/pi-coding-agent";
+import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import type { AssistantMessage } from "@earendil-works/pi-ai";
 import { truncateToWidth, TUI, visibleWidth } from "@earendil-works/pi-tui";
 import { homedir } from "node:os";
@@ -75,8 +76,11 @@ function contextProgress(ctx: ExtensionContext) {
   return `${bar} ${pct}% (${formatTokens(contextWindow)})`;
 }
 
-function modelInfo(ctx: ExtensionContext, thinkingLevel) {
-  const model = ctx.model?.id || ctx.model?.name || "no-model";
+function modelInfo(ctx: ExtensionContext, thinkingLevel: ThinkingLevel) {
+  const model = ctx.model?.id || ctx.model?.name || "";
+  if (!model) {
+    return "";
+  }
   return `${model} • ${thinkingLevel}`;
 }
 
