@@ -93,14 +93,17 @@ export default function (pi: ExtensionAPI) {
   ) => {
     return {
       dispose: footerData.onBranchChange(() => tui.requestRender()),
-      invalidate() {},
+      invalidate() { },
       render(width: number) {
-        const leftParts: string[] = [
-          shortCwd(ctx),
-          gitBranch(footerData),
-          tokenStats(ctx),
-          contextProgress(ctx),
-        ];
+        const leftParts: string[] = [shortCwd(ctx)];
+
+        if (footerData.getGitBranch()) {
+          leftParts.push(gitBranch(footerData))
+        }
+
+        leftParts.push(tokenStats(ctx))
+        leftParts.push(contextProgress(ctx))
+
         const rightParts = [modelInfo(ctx, pi.getThinkingLevel())];
         const sep = ` │ `;
 
