@@ -12,6 +12,7 @@ import { homedir } from "node:os";
 const BRANCH_ICON = "\uf418";
 const INPUT_ICON = "\ueaa1";
 const OUTPUT_ICON = "\uea9a";
+const CLOCK_ICON = "\ue641"
 
 const RESET = "\x1b[0m";
 
@@ -165,7 +166,7 @@ export default function (pi: ExtensionAPI) {
 
     const elapsedSeconds = elapsedMs / 1000;
     const tokensPerSecond = output / elapsedSeconds;
-    const message = `TPS ${tokensPerSecond.toFixed(1)} tok/s., in ${input.toLocaleString()}, out ${output.toLocaleString()}, ${elapsedSeconds.toFixed(1)}s`;
-    ctx.ui.setStatus("tps", message);
+    const message = `TPS ${tokensPerSecond.toFixed(1)} tok/s., ${INPUT_ICON} ${input.toLocaleString()}, ${OUTPUT_ICON} ${output.toLocaleString()}, ${CLOCK_ICON} ${elapsedSeconds.toFixed(1)}s`;
+    ctx.ui.notify(message, "info");
   })
 }
