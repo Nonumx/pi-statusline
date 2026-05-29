@@ -91,7 +91,7 @@ function modelInfo(ctx: ExtensionContext, thinkingLevel: ThinkingLevel) {
   if (!model) {
     return "";
   }
-  return `${model} • ${thinkingLevel}`;
+  return `(${ctx.model.provider}) ${model} • ${thinkingLevel}`;
 }
 
 export default function (pi: ExtensionAPI) {
