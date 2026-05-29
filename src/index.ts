@@ -12,7 +12,6 @@ import { homedir } from "node:os";
 const BRANCH_ICON = "\uf418";
 const INPUT_ICON = "\ueaa1";
 const OUTPUT_ICON = "\uea9a";
-const CLOCK_ICON = "\ue641"
 
 const RESET = "\x1b[0m";
 
@@ -67,20 +66,30 @@ function tokenStats(ctx: ExtensionContext) {
   return `${INPUT_ICON} ${formattedInput} ${OUTPUT_ICON} ${formattedOutput}`;
 }
 
-function contextProgress(ctx: ExtensionContext) {
+function contextProgress(ctx: ExtensionContext, theme: Theme) {
   const usage = ctx.getContextUsage();
   const contextWindow = usage?.contextWindow ?? ctx.model?.contextWindow;
   if (!contextWindow) return undefined;
 
   const percent = usage?.percent;
   if (percent === null || percent === undefined) {
-    return `(${formatTokens(contextWindow)})`;
+    return theme.fg("dim", `(${formatTokens(contextWindow)})`);
   }
 
   const pct = Math.max(0, Math.min(100, Math.round(percent)));
   const filled = Math.min(10, Math.ceil((pct * 10) / 100));
-  const bar = `Ctx ${"█".repeat(filled)}${"░".repeat(10 - filled)}`;
-  return `${bar} ${pct}% (${formatTokens(contextWindow)})`;
+
+  let filledColor: string;
+  if (pct < 50) {
+    filledColor = theme.fg("success", "█");
+  } else if (pct < 80) {
+    filledColor = theme.fg("warning", "█");
+  } else {
+    filledColor = theme.fg("error", "█");
+  }
+
+  const bar = theme.fg("dim", "Ctx ") + filledColor.repeat(filled) + theme.fg("dim", "░".repeat(10 - filled));
+  return `${bar} ${theme.fg("dim", `${pct}% (${formatTokens(contextWindow)})`)}`;
 }
 
 function modelInfo(ctx: ExtensionContext, thinkingLevel: ThinkingLevel) {
@@ -104,16 +113,16 @@ export default function (pi: ExtensionAPI) {
       dispose: footerData.onBranchChange(() => tui.requestRender()),
       invalidate() { },
       render(width: number) {
-        const leftParts: string[] = [shortCwd(ctx)];
+        const leftParts: string[] = [theme.fg("dim", shortCwd(ctx))];
 
         if (footerData.getGitBranch()) {
-          leftParts.push(gitBranch(footerData))
+          leftParts.push(theme.fg("dim", gitBranch(footerData)))
         }
 
-        leftParts.push(tokenStats(ctx))
-        leftParts.push(contextProgress(ctx))
+        leftParts.push(theme.fg("dim", tokenStats(ctx)))
+        leftParts.push(contextProgress(ctx, theme))
 
-        const rightParts = [modelInfo(ctx, pi.getThinkingLevel())];
+        const rightParts = [theme.fg("dim", modelInfo(ctx, pi.getThinkingLevel()))];
         const sep = ` │ `;
 
         const left = leftParts.join(sep);
@@ -166,7 +175,7 @@ export default function (pi: ExtensionAPI) {
 
     const elapsedSeconds = elapsedMs / 1000;
     const tokensPerSecond = output / elapsedSeconds;
-    const message = `TPS ${tokensPerSecond.toFixed(1)} tok/s., ${INPUT_ICON} ${input.toLocaleString()}, ${OUTPUT_ICON} ${output.toLocaleString()}, ${CLOCK_ICON} ${elapsedSeconds.toFixed(1)}s`;
+    const message = `TPS ${tokensPerSecond.toFixed(1)} tok/s., ${INPUT_ICON} ${input.toLocaleString()}, ${OUTPUT_ICON} ${output.toLocaleString()}, ${elapsedSeconds.toFixed(1)}s`;
     ctx.ui.notify(message, "info");
   })
 }
