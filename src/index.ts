@@ -13,12 +13,6 @@ const BRANCH_ICON = "\uf418";
 const INPUT_ICON = "\ueaa1";
 const OUTPUT_ICON = "\uea9a";
 
-const RESET = "\x1b[0m";
-
-function color(c: string, text: string): string {
-  return `${c}${text}${RESET}`;
-}
-
 function isAssistantMessage(message: unknown): message is AssistantMessage {
   if (!message || typeof message !== "object") return false;
   const role = (message as { role?: unknown }).role;
