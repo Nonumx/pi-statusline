@@ -1,6 +1,6 @@
 {
   "name": "pi-statusline",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": "true",
   "type": "module",
   "keywords": [
@@ -11,7 +11,7 @@
   },
   "pi": {
     "extensions": [
-      "./src/index.ts"
+      "./src/statusline"
     ]
   },
   "devDependencies": {
@@ -21,4 +21,3 @@
     "typescript": "^6.0.3"
   }
 }
-
