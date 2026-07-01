@@ -95,7 +95,21 @@ function modelInfo(ctx: ExtensionContext, thinkingLevel: ThinkingLevel) {
 }
 
 export default function (pi: ExtensionAPI) {
-  let agentStartMs: number | null = null;
+  // Per-agent-phase decode timing accumulators
+  let decodeMs = 0;
+  let totalOutputTokens = 0;
+  let totalInputTokens = 0;
+  // Wall-clock time of the first streaming chunk of the current assistant
+  // message. Reset to null after each message_end so multi-turn runs (with
+  // tool calls between LLM calls) accumulate decode time correctly.
+  let decodeStart: number | null = null;
+
+  const resetPhase = () => {
+    decodeMs = 0;
+    totalOutputTokens = 0;
+    totalInputTokens = 0;
+    decodeStart = null;
+  };
 
   const customStatusline = (
     tui: TUI,
@@ -145,31 +159,35 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.on("agent_start", () => {
-    agentStartMs = Date.now()
-  })
+    resetPhase();
+  });
 
-  pi.on("agent_end", (event, ctx) => {
-    if (!ctx.hasUI) return;
-    if (agentStartMs === null) return;
-
-    const elapsedMs = Date.now() - agentStartMs;
-    agentStartMs = null;
-    if (elapsedMs <= 0) return;
-
-    let input = 0;
-    let output = 0;
-
-    for (const message of event.messages) {
-      if (!isAssistantMessage(message)) continue;
-      input += message.usage.input || 0;
-      output += message.usage.output || 0;
+  pi.on("message_update", () => {
+    // message_update only fires for assistant streaming updates. Capture the
+    // timestamp of the first chunk (post-prefill) to measure decode time.
+    if (decodeStart === null) {
+      decodeStart = Date.now();
     }
+  });
 
-    if (output <= 0) return;
+  pi.on("message_end", (event) => {
+    if (!isAssistantMessage(event.message)) return;
+    if (decodeStart !== null) {
+      decodeMs += Date.now() - decodeStart;
+      decodeStart = null;
+    }
+    const m = event.message as AssistantMessage;
+    totalInputTokens += m.usage.input || 0;
+    totalOutputTokens += m.usage.output || 0;
+  });
 
-    const elapsedSeconds = elapsedMs / 1000;
-    const tokensPerSecond = output / elapsedSeconds;
-    const message = `TPS ${tokensPerSecond.toFixed(1)} tok/s., ${INPUT_ICON} ${input.toLocaleString()}, ${OUTPUT_ICON} ${output.toLocaleString()}, ${elapsedSeconds.toFixed(1)}s`;
+  pi.on("agent_end", (_event, ctx) => {
+    if (!ctx.hasUI) return;
+    if (totalOutputTokens <= 0) return;
+
+    const decodeSeconds = decodeMs / 1000;
+    const tokensPerSecond = decodeSeconds > 0 ? totalOutputTokens / decodeSeconds : 0;
+    const message = `TPS ${tokensPerSecond.toFixed(1)} tok/s., ${INPUT_ICON} ${totalInputTokens.toLocaleString()}, ${OUTPUT_ICON} ${totalOutputTokens.toLocaleString()}, ${decodeSeconds.toFixed(1)}s`;
     ctx.ui.notify(message, "info");
-  })
+  });
 }
